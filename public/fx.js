@@ -78,3 +78,24 @@ const DNAME=['','سهل','متوسط','صعب'];
 let DIF=localStorage.dif||'all';
 const setDif=v=>{DIF=v;localStorage.dif=v;home()};
 const difBar=()=>`<div class="chips" role="group" aria-label="الصعوبة">${[['all','كل المستويات'],[1,'سهل'],[2,'متوسط'],[3,'صعب']].map(([v,n])=>`<button class="chip2${DIF==v?' on':''}" onclick="setDif('${v}')">${n}</button>`).join('')}</div>`;
+
+Object.assign(P,{
+ voice:'<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9v3M12 8v5M16 9v3"/>',
+ voiceoff:'<path d="M4 5h16v11H9l-5 4z"/><path d="M5 3l14 18"/>',
+ download:'<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>'});
+const TTS={on:localStorage.tts!=='0',
+ voice(){const v=speechSynthesis.getVoices();return v.find(x=>/^ar[-_]EG/i.test(x.lang))||v.find(x=>/^ar/i.test(x.lang))||null},
+ say(t){if(!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t),v=this.voice();u.lang=v?v.lang:'ar-SA';if(v)u.voice=v;u.rate=.95;speechSynthesis.speak(u)},
+ stop(){if(window.speechSynthesis)speechSynthesis.cancel()},
+ toggle(){this.on=!this.on;localStorage.tts=this.on?'1':'0';if(!this.on)this.stop();const b=document.getElementById('tt');if(b)b.innerHTML=ic(this.on?'voice':'voiceoff')}};
+
+function tabs(){let f=document.querySelector('.tb');
+ if(!f){document.body.insertAdjacentHTML('beforeend',`<footer class="tb">${[['','home','الرئيسية'],['daily','flame','التحدي'],['skills','puzzle','المهارات'],['top','trophy','المتصدرون']].map(([h,i,n])=>`<a href="#/${h}" data-h="${h}">${ic(i)}<span>${n}</span></a>`).join('')}</footer>`);f=document.querySelector('.tb')}
+ const p=(location.hash.slice(2)||'').split('/')[0];f.querySelectorAll('a').forEach(a=>a.classList.toggle('on',a.dataset.h===p))}
+
+let DEF=null;
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent),isApp=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();DEF=e;const b=document.getElementById('inst');if(b)b.hidden=false});
+const installBtn=()=>isApp?'':`<button class="btn alt wide" id="inst"${DEF||isIOS?'':' hidden'} onclick="installApp()">${ic('download','sm')} ثبّت التطبيق على هاتفك</button>`;
+async function installApp(){if(DEF){DEF.prompt();await DEF.userChoice;DEF=null;const b=document.getElementById('inst');if(b)b.hidden=true}else alert('في الآيفون: اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية»')}
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));

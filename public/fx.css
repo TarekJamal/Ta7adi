@@ -33,3 +33,24 @@ html.shk{animation:sh2 .5s}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
 .chip2{background:#ffffff14;color:var(--sand);border:1px solid #ffffff22;padding:8px 16px;margin:0;border-radius:20px}
 .chip2.on{background:var(--tile);color:#06231f;border-color:var(--tile)}
+.lv1{color:#5ee0a0}.lv2{color:#f2b84b}.lv3{color:#ff7a6b}
+.tg{display:grid;gap:8px;margin-top:10px}
+.tile{aspect-ratio:1;font-size:1.5rem;font-weight:900;margin:0;padding:0;border-radius:14px;background:#ffffff1c;color:var(--sand);border:1px solid #ffffff2a;display:flex;align-items:center;justify-content:center}
+.tile:hover:not(:disabled){border-color:var(--tile);transform:translateY(-2px)}
+.tile:disabled{opacity:.3}.tile.ok{background:#1f9d6b66;border-color:#1f9d6b}
+.slots{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0}
+.slots .tile{width:56px;height:56px;aspect-ratio:auto}
+.sl{border-style:dashed;background:#0004}
+.mc .fr{display:none}.mc.on .fr,.mc.ok .fr{display:block}.mc.on .bk,.mc.ok .bk{display:none}.mc .ic{width:60%;height:60%;color:var(--amber)}
+.seq{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:16px 0}
+.nb{min-width:52px;padding:12px;border-radius:12px;background:#ffffff1c;font-size:1.5rem;font-weight:900}.nb.q{background:var(--amber);color:#2a1d00}
+.card small{font-weight:400;opacity:.8;font-size:.8rem}
+body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain;-webkit-user-select:none;user-select:none}
+input{-webkit-user-select:text;user-select:text}
+nav{padding-top:calc(12px + env(safe-area-inset-top))}
+.ib.sm2{width:32px;height:32px;vertical-align:middle;margin-inline-start:6px}
+.tb{display:none;position:fixed;bottom:0;inset-inline:0;z-index:40;justify-content:space-around;background:#0b1830f2;backdrop-filter:blur(8px);border-top:1px solid #ffffff22;padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+.tb a{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.72rem;color:#f3e9d2aa;padding:4px 12px}
+.tb a.on{color:var(--amber)}
+@media(max-width:700px){.tb{display:flex}main{padding-bottom:96px}}
+@media(display-mode:standalone){.tb{display:flex}main{padding-bottom:96px}}

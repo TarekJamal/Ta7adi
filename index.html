@@ -2,12 +2,18 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>تحدي المعرفة</title>
 <meta name="description" content="اختبر معلوماتك الإسلامية: القرآن، السيرة، الأنبياء، الصحابة، والتاريخ. تحدٍّ يومي ولوحة متصدرين.">
 <meta property="og:title" content="تحدي المعرفة – هل تستطيع التفوق عليّ؟">
 <meta name="theme-color" content="#10203a">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E🌙%3C/text%3E%3C/svg%3E">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="تحدي المعرفة">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#10203a;--bg2:#1a3358;--tile:#2bb3a3;--amber:#f2b84b;--sand:#f3e9d2}
@@ -50,6 +56,7 @@ input,select{width:100%;padding:12px;margin:5px 0;border-radius:10px;border:1px 
 <nav id="nav"></nav>
 <main id="app"></main>
 <script src="fx.js"></script>
+<script src="skills.js"></script>
 <script>
 const $=s=>document.querySelector(s),app=$('#app');
 const CATS={quran:['📖','القرآن'],seerah:['🕌','السيرة'],prophets:['🌙','الأنبياء'],companions:['🛡️','الصحابة'],history:['🏛️','التاريخ الإسلامي'],general:['💡','معلومات عامة']};
@@ -59,14 +66,14 @@ const lvl=x=>Math.floor(Math.sqrt(x/60))+1;
 async function api(p,o={}){
   const r=await fetch('/api/'+p,{method:o.method||(o.body?'POST':'GET'),headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:o.body&&JSON.stringify(o.body)});
   const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'حدث خطأ');return d}
-function nav(){const h=location.hash.length>2;$('#nav').innerHTML=`<div class="navl">${h?`<button class="ib" onclick="back()" aria-label="رجوع">${ic('back')}</button><a class="ib" href="#/" aria-label="الرئيسية">${ic('home')}</a>`:''}<a href="#/" class="logo" aria-label="الرئيسية">${LOGO}<span>تحدي المعرفة</span></a></div><div class="navr"><button class="ib" id="mu" onclick="SFX.toggle()" aria-label="الصوت">${ic(SFX.muted?'mute':'sound')}</button>${user?`${avatar(user.username)}<span class="chip">${user.xp} XP · م${lvl(user.xp)} ${rank(lvl(user.xp))} · ${ic('flame','sm')}${user.streak}</span>${user.admin?'<a href="#/admin" class="ib" aria-label="الإدارة">'+ic('gear')+'</a>':''}<a href="#/" onclick="out()">خروج</a>`:'<a class="btn sm" href="#/auth">دخول</a>'}</div>`}
+function nav(){const h=location.hash.length>2;$('#nav').innerHTML=`<div class="navl">${h?`<button class="ib" onclick="back()" aria-label="رجوع">${ic('back')}</button><a class="ib" href="#/" aria-label="الرئيسية">${ic('home')}</a>`:''}<a href="#/" class="logo" aria-label="الرئيسية">${LOGO}<span>تحدي المعرفة</span></a></div><div class="navr"><button class="ib" id="mu" onclick="SFX.toggle()" aria-label="الصوت">${ic(SFX.muted?'mute':'sound')}</button><button class="ib" id="tt" onclick="TTS.toggle()" aria-label="قراءة الأسئلة">${ic(TTS.on?'voice':'voiceoff')}</button>${user?`${avatar(user.username)}<span class="chip">${user.xp} XP · م${lvl(user.xp)} ${rank(lvl(user.xp))} · ${ic('flame','sm')}${user.streak}</span>${user.admin?'<a href="#/admin" class="ib" aria-label="الإدارة">'+ic('gear')+'</a>':''}<a href="#/" onclick="out()">خروج</a>`:'<a class="btn sm" href="#/auth">دخول</a>'}</div>`}
 function out(){token=user=null;localStorage.removeItem('t');route()}
-function route(){clearInterval(G&&G.tm);nav();const[p,a]=(location.hash.slice(2)||'').split('/');({'':home,play,daily:()=>play('daily'),top:board,auth,admin}[p]||home)(a)}
+function route(){clearInterval(G&&G.tm);nav();TTS.stop();tabs();const[p,a]=(location.hash.slice(2)||'').split('/');({'':home,play,daily:()=>play('daily'),top:board,auth,admin,skills}[p]||home)(a)}
 window.onhashchange=route;
 (async()=>{if(token)try{user=await api('me')}catch{token=null;localStorage.removeItem('t')}route()})();
 
 function home(){app.innerHTML=`<section class="hero"><h1>كم تعرف عن تاريخك وقرآنك؟</h1><p>عشر أسئلة، خمس عشرة ثانية لكل سؤال. اجمع النقاط، ارفع مستواك، وتصدّر القائمة.</p><a class="btn" href="#/daily">${ic('flame','sm')} التحدي اليومي (نقاط مضاعفة)</a><a class="btn alt" href="#/play/all">${ic('all','sm')} أسئلة عشوائية</a></section>
-${difBar()}<div class="grid">${Object.entries(CATS).map(([k,[e,n]])=>`<a class="card" href="#/play/${k}"><b>${ic(k)}</b>${n}</a>`).join('')}</div><a class="btn alt wide" href="#/top">${ic('trophy','sm')} المتصدرون</a>`}
+${difBar()}<div class="grid">${Object.entries(CATS).map(([k,[e,n]])=>`<a class="card" href="#/play/${k}"><b>${ic(k)}</b>${n}</a>`).join('')}</div>${installBtn()}<a class="btn wide" href="#/skills">${ic('puzzle','sm')} ركن تنمية المهارات</a><a class="btn alt wide" href="#/top">${ic('trophy','sm')} المتصدرون</a>`}
 
 async function play(cat='all'){
   try{const d=cat==='daily'?await api('daily'):{questions:await api('questions?n=10&level='+DIF+'&category='+cat)};
@@ -75,11 +82,12 @@ async function play(cat='all'){
   catch(e){app.innerHTML=`<div class="box">${esc(e.message)}</div>`}}
 function ask(){
   const q=G.qs[G.i];if(!q)return fin();G.T=G.t=q.kind==='audio'?25:15;G.lock=0;
-  app.innerHTML=`<div class="box"><div class="meta"><span>${CATS[q.category]?CATS[q.category][1]:''} · ${G.i+1}/${G.qs.length} · <b class="lv${q.difficulty||1}">${DNAME[q.difficulty||1]}</b></span><span class="tmw" id="tmw">${ic('clock','sm')}<b id="tm">${G.T}</b></span></div><div class="bar"><i id="bar"></i></div><h2>${esc(q.text)}</h2>${media(q)}${q.options.map((o,k)=>`<button class="opt" style="--d:${k*70}ms" data-i="${o.i}">${esc(o.t)}</button>`).join('')}</div>`;
+  app.innerHTML=`<div class="box"><div class="meta"><span>${CATS[q.category]?CATS[q.category][1]:''} · ${G.i+1}/${G.qs.length} · <b class="lv${q.difficulty||1}">${DNAME[q.difficulty||1]}</b></span><span class="tmw" id="tmw">${ic('clock','sm')}<b id="tm">${G.T}</b></span></div><div class="bar"><i id="bar"></i></div><h2>${esc(q.text)}<button class="ib sm2" onclick="TTS.say(G.qs[G.i].text+'. '+G.qs[G.i].options.map(o=>o.t).join('، '))" aria-label="استمع للسؤال">${ic('voice')}</button></h2>${media(q)}${q.options.map((o,k)=>`<button class="opt" style="--d:${k*70}ms" data-i="${o.i}">${esc(o.t)}</button>`).join('')}</div>`;
   app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>pick(+b.dataset.i));
+  if(TTS.on&&q.kind!=='audio')TTS.say(q.text);
   G.tm=setInterval(()=>{G.t--;$('#tm').textContent=G.t;if(G.t<=5&&G.t>0){$('#tmw').classList.add('pulse');SFX.play(G.t%2?'tick':'tock')}$('#bar').style.width=G.t/G.T*100+'%';if(G.t<=0)pick(-1)},1000)}
 async function pick(c){
-  if(G.lock)return;G.lock=1;clearInterval(G.tm);document.querySelectorAll('audio,video').forEach(m=>m.pause());const q=G.qs[G.i];
+  if(G.lock)return;G.lock=1;clearInterval(G.tm);TTS.stop();document.querySelectorAll('audio,video').forEach(m=>m.pause());const q=G.qs[G.i];
   const r=await api('answer',{body:{id:q.id,choice:c}});
   if(r.correct)G.ok++;G.ans.push({id:q.id,choice:c,left:Math.max(G.t,0)});
   app.querySelectorAll('.opt').forEach(b=>{b.disabled=1;const i=+b.dataset.i;if(i===r.answer)b.classList.add('good');else if(i===c)b.classList.add('bad')});

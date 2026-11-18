@@ -4,7 +4,7 @@ const app = express(), SECRET = process.env.JWT_SECRET || 'dev-secret', ADMIN = 
 const db = createClient({ url: process.env.TURSO_DATABASE_URL || 'file:local.db', authToken: process.env.TURSO_AUTH_TOKEN });
 const all = async (sql, args = []) => (await db.execute({ sql, args })).rows.map(r => ({ ...r }));
 const run = (sql, args = []) => db.execute({ sql, args });
-app.use(express.json()); app.use(express.static('public'));
+app.use(express.json()); app.use(express.static('public', { setHeaders: (r, p) => { if (p.endsWith('sw.js')) r.setHeader('Cache-Control', 'no-cache'); } }));
 
 app.use('/api', (q, s, n) => { try { q.u = jwt.verify((q.headers.authorization || '').slice(7), SECRET); } catch {} n(); });
 const need = (q, s, n) => q.u ? n() : s.status(401).json({ error: 'سجّل الدخول أولاً' });
