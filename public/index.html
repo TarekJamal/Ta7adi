@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تحدي المعرفة</title>
+<meta name="description" content="اختبر معلوماتك الإسلامية: القرآن، السيرة، الأنبياء، الصحابة، والتاريخ. تحدٍّ يومي ولوحة متصدرين.">
+<meta property="og:title" content="تحدي المعرفة – هل تستطيع التفوق عليّ؟">
+<meta name="theme-color" content="#10203a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E🌙%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#10203a;--bg2:#1a3358;--tile:#2bb3a3;--amber:#f2b84b;--sand:#f3e9d2}
+*{box-sizing:border-box}
+body{margin:0;font-family:Cairo,sans-serif;color:var(--sand);min-height:100vh;background:
+ radial-gradient(circle at 50% 0,var(--bg2),var(--bg) 60%)}
+nav{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;max-width:900px;margin:auto;padding:12px 16px}
+a{color:var(--amber);text-decoration:none}
+.logo{font-weight:900;font-size:1.3rem}
+.chip{background:#0005;padding:4px 12px;border-radius:20px;font-size:.85rem;margin-inline:6px}
+main{max-width:900px;margin:auto;padding:8px 16px 60px}
+.hero{padding:36px 0 28px;border-bottom:3px solid var(--tile);margin-bottom:20px}
+.hero h1{font-size:clamp(2rem,7vw,3.4rem);line-height:1.2;margin:0 0 10px;font-weight:900}
+.hero p{margin:0 0 18px;max-width:34em;opacity:.85}
+.btn,button{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:12px 22px;background:var(--amber);color:#2a1d00;font-weight:700;display:inline-block;margin:4px 0;margin-inline-end:8px}
+.btn.alt{background:#ffffff1f;color:var(--sand)}
+.wide{width:100%;text-align:center}.sm{padding:4px 10px;font-size:.85rem;margin:0 2px}
+.btn:focus-visible,button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--tile);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px}
+.card{background:#ffffff12;border:1px solid #ffffff22;border-radius:6px 22px 6px 22px;padding:18px 10px;text-align:center;color:var(--sand);display:flex;flex-direction:column;gap:4px;font-weight:700}
+.card b{font-size:2.2rem}.card:hover{border-color:var(--tile)}
+.box{background:#0006;border:1px solid #ffffff22;border-radius:18px;padding:20px;margin:12px 0}
+.center{text-align:center}.big{font-size:3.5rem;margin:0;color:var(--amber);font-weight:900}
+input,select{width:100%;padding:12px;margin:5px 0;border-radius:10px;border:1px solid #ffffff44;background:#0005;color:var(--sand);font:inherit}
+.opt{display:block;width:100%;text-align:start;background:#ffffff14;color:var(--sand);margin:8px 0;border:1px solid #ffffff22}
+.opt:hover:not(:disabled){border-color:var(--tile)}
+.good{background:#1f9d6b!important;color:#fff!important}.bad{background:#c0392b!important;color:#fff!important}
+.meta{display:flex;justify-content:space-between;margin-bottom:6px}
+.bar{height:8px;background:#ffffff22;border-radius:8px;overflow:hidden}
+.bar i{display:block;height:100%;width:100%;background:var(--tile);transition:width 1s linear}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #ffffff14}
+.tabs{display:flex;gap:6px}.err{color:#ff9b8f;min-height:1.4em}
+@media(prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+<link rel="stylesheet" href="fx.css">
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+</head>
+<body>
+<nav id="nav"></nav>
+<main id="app"></main>
+<script src="fx.js"></script>
+<script>
+const $=s=>document.querySelector(s),app=$('#app');
+const CATS={quran:['📖','القرآن'],seerah:['🕌','السيرة'],prophets:['🌙','الأنبياء'],companions:['🛡️','الصحابة'],history:['🏛️','التاريخ الإسلامي'],general:['💡','معلومات عامة']};
+let token=localStorage.t,user=null,G=null,Q=[];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const lvl=x=>Math.floor(Math.sqrt(x/60))+1;
+async function api(p,o={}){
+  const r=await fetch('/api/'+p,{method:o.method||(o.body?'POST':'GET'),headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:o.body&&JSON.stringify(o.body)});
+  const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'حدث خطأ');return d}
+function nav(){const h=location.hash.length>2;$('#nav').innerHTML=`<div class="navl">${h?`<button class="ib" onclick="back()" aria-label="رجوع">${ic('back')}</button><a class="ib" href="#/" aria-label="الرئيسية">${ic('home')}</a>`:''}<a href="#/" class="logo" aria-label="الرئيسية">${LOGO}<span>تحدي المعرفة</span></a></div><div class="navr"><button class="ib" id="mu" onclick="SFX.toggle()" aria-label="الصوت">${ic(SFX.muted?'mute':'sound')}</button>${user?`${avatar(user.username)}<span class="chip">${user.xp} XP · م${lvl(user.xp)} ${rank(lvl(user.xp))} · ${ic('flame','sm')}${user.streak}</span>${user.admin?'<a href="#/admin" class="ib" aria-label="الإدارة">'+ic('gear')+'</a>':''}<a href="#/" onclick="out()">خروج</a>`:'<a class="btn sm" href="#/auth">دخول</a>'}</div>`}
+function out(){token=user=null;localStorage.removeItem('t');route()}
+function route(){clearInterval(G&&G.tm);nav();const[p,a]=(location.hash.slice(2)||'').split('/');({'':home,play,daily:()=>play('daily'),top:board,auth,admin}[p]||home)(a)}
+window.onhashchange=route;
+(async()=>{if(token)try{user=await api('me')}catch{token=null;localStorage.removeItem('t')}route()})();
+
+function home(){app.innerHTML=`<section class="hero"><h1>كم تعرف عن تاريخك وقرآنك؟</h1><p>عشر أسئلة، خمس عشرة ثانية لكل سؤال. اجمع النقاط، ارفع مستواك، وتصدّر القائمة.</p><a class="btn" href="#/daily">${ic('flame','sm')} التحدي اليومي (نقاط مضاعفة)</a><a class="btn alt" href="#/play/all">${ic('all','sm')} أسئلة عشوائية</a></section>
+${difBar()}<div class="grid">${Object.entries(CATS).map(([k,[e,n]])=>`<a class="card" href="#/play/${k}"><b>${ic(k)}</b>${n}</a>`).join('')}</div><a class="btn alt wide" href="#/top">${ic('trophy','sm')} المتصدرون</a>`}
+
+async function play(cat='all'){
+  try{const d=cat==='daily'?await api('daily'):{questions:await api('questions?n=10&level='+DIF+'&category='+cat)};
+  if(!d.played&&!d.questions.length)return app.innerHTML='<div class="box center"><h2>لا توجد أسئلة بهذا المستوى بعد</h2><a class="btn" href="#/">الرجوع</a></div>';if(d.played)return app.innerHTML=`<div class="box center"><h2>أنجزت تحدي اليوم ✅</h2><p>عُد غداً للحفاظ على سلسلتك 🔥</p><a class="btn" href="#/">الرئيسية</a></div>`;
+  G={mode:cat==='daily'?'daily':'normal',cat,qs:d.questions,i:0,ans:[],ok:0};ask()}
+  catch(e){app.innerHTML=`<div class="box">${esc(e.message)}</div>`}}
+function ask(){
+  const q=G.qs[G.i];if(!q)return fin();G.T=G.t=q.kind==='audio'?25:15;G.lock=0;
+  app.innerHTML=`<div class="box"><div class="meta"><span>${CATS[q.category]?CATS[q.category][1]:''} · ${G.i+1}/${G.qs.length} · <b class="lv${q.difficulty||1}">${DNAME[q.difficulty||1]}</b></span><span class="tmw" id="tmw">${ic('clock','sm')}<b id="tm">${G.T}</b></span></div><div class="bar"><i id="bar"></i></div><h2>${esc(q.text)}</h2>${media(q)}${q.options.map((o,k)=>`<button class="opt" style="--d:${k*70}ms" data-i="${o.i}">${esc(o.t)}</button>`).join('')}</div>`;
+  app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>pick(+b.dataset.i));
+  G.tm=setInterval(()=>{G.t--;$('#tm').textContent=G.t;if(G.t<=5&&G.t>0){$('#tmw').classList.add('pulse');SFX.play(G.t%2?'tick':'tock')}$('#bar').style.width=G.t/G.T*100+'%';if(G.t<=0)pick(-1)},1000)}
+async function pick(c){
+  if(G.lock)return;G.lock=1;clearInterval(G.tm);document.querySelectorAll('audio,video').forEach(m=>m.pause());const q=G.qs[G.i];
+  const r=await api('answer',{body:{id:q.id,choice:c}});
+  if(r.correct)G.ok++;G.ans.push({id:q.id,choice:c,left:Math.max(G.t,0)});
+  app.querySelectorAll('.opt').forEach(b=>{b.disabled=1;const i=+b.dataset.i;if(i===r.answer)b.classList.add('good');else if(i===c)b.classList.add('bad')});
+  const el=app.querySelector('.opt[data-i="'+c+'"]');
+  if(r.correct){SFX.play('good');floatXP(el,'+'+(5+5*(q.difficulty||1)+Math.max(G.t,0)))}else{SFX.play('bad');shakeScreen(el||$('.box'))}
+  setTimeout(()=>{G.i++;ask()},1300)}
+async function fin(){
+  let r={correct:G.ok,total:G.qs.length,score:0};
+  if(token)try{r=await api('finish',{body:{mode:G.mode,category:G.cat,answers:G.ans}});user.xp=r.xp;user.streak=r.streak;nav()}catch(e){r.err=e.message}
+  const msg=`جبت ${r.correct}/${r.total} في تحدي المعرفة 🌙 هل تستطيع التفوق عليّ؟ ${location.origin}`;
+  app.innerHTML=`<div class="box center"><h1>${r.correct>=r.total*.7?'🎉 أحسنت!':'👏 محاولة جيدة'}</h1><p class="big">${r.correct}/${r.total}</p>
+  ${token?`<p>+${r.score} نقطة · مستوى ${lvl(r.xp)} (${rank(lvl(r.xp))})${r.err?'<br>'+esc(r.err):''}</p>`:'<p>سجّل حساباً لحفظ نقاطك والمنافسة على القائمة.</p><a class="btn" href="#/auth">إنشاء حساب</a>'}
+  <a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(msg)}">📤 شارك على واتساب</a>
+  <button class="btn alt" onclick="play('${G.cat}')">🔁 العب مرة أخرى</button><button class="btn alt" onclick="makeCard()">${ic('image','sm')} بطاقة النتيجة</button></div>`;
+  G.res=r;if(r.correct>=r.total*.7){SFX.play('win');burst()}}
+
+async function board(p='week'){
+  const rows=await api('leaderboard?period='+p);
+  app.innerHTML=`<div class="box"><h2>🏆 المتصدرون</h2><div class="tabs"><button class="${p=='week'?'':'alt'} btn" onclick="board('week')">هذا الأسبوع</button><button class="${p=='all'?'':'alt'} btn" onclick="board('all')">كل الأوقات</button></div>${rows.map((r,i)=>`<div class="row"><span>${['🥇','🥈','🥉'][i]||i+1}</span><b class="who">${avatar(r.username)}${esc(r.username)}</b><span>${r.pts} نقطة</span></div>`).join('')||'<p>لا توجد نتائج بعد. كن أول المتصدرين!</p>'}</div>`}
+
+function auth(){
+  let reg=0;const draw=()=>{
+    app.innerHTML=`<div class="box"><h2>${reg?'إنشاء حساب':'تسجيل الدخول'}</h2><input id="u" placeholder="اسم المستخدم" autocomplete="username"><input id="p" type="password" placeholder="كلمة المرور (6 أحرف على الأقل)" autocomplete="current-password"><p id="er" class="err"></p><button class="btn wide" id="go">${reg?'إنشاء الحساب':'دخول'}</button><p><a href="#/auth" id="sw">${reg?'لدي حساب بالفعل':'ليس لدي حساب'}</a></p></div>`;
+    $('#sw').onclick=e=>{e.preventDefault();reg=!reg;draw()};
+    $('#go').onclick=async()=>{try{const d=await api(reg?'register':'login',{body:{username:$('#u').value.trim(),password:$('#p').value}});token=d.token;localStorage.t=token;user=d.user;location.hash='#/'}catch(e){$('#er').textContent=e.message}}};
+  draw()}
+
+async function admin(){
+  if(!user||!user.admin)return app.innerHTML='<div class="box">هذه الصفحة للمشرف فقط.</div>';
+  Q=await api('admin/questions');
+  app.innerHTML=`<div class="box"><h2>⚙️ إدارة الأسئلة (${Q.length})</h2><input id="id" type="hidden"><select id="c">${Object.entries(CATS).map(([k,[e,n]])=>`<option value="${k}">${n}</option>`).join('')}</select><input id="t" placeholder="نص السؤال"><select id="k"><option value="text">نص فقط</option><option value="image">صورة / خريطة</option><option value="audio">صوت</option><option value="video">فيديو</option></select><input id="m" placeholder="رابط الوسائط: https://... أو /media/اسم-الملف"><select id="d"><option value="1">سهل</option><option value="2">متوسط</option><option value="3">صعب</option></select>${[0,1,2,3].map(i=>`<input class="o" placeholder="الخيار ${i+1}">`).join('')}<select id="a">${[1,2,3,4].map((n,i)=>`<option value="${i}">الإجابة الصحيحة: الخيار ${n}</option>`).join('')}</select><button class="btn wide" id="sv">حفظ السؤال</button></div>
+  <div class="box">${Q.map(q=>`<div class="row"><span>${CATS[q.category]?CATS[q.category][0]:''} ${esc(q.text)}</span><span><button class="sm" onclick="edit(${q.id})">✏️</button><button class="sm" onclick="del(${q.id})">🗑️</button></span></div>`).join('')}</div>`;
+  $('#sv').onclick=async()=>{const id=$('#id').value,b={category:$('#c').value,text:$('#t').value,options:[...document.querySelectorAll('.o')].map(x=>x.value),answer:+$('#a').value,kind:$('#k').value,media:$('#m').value.trim(),difficulty:+$('#d').value};
+    try{await api('admin/questions'+(id?'/'+id:''),{method:id?'PUT':'POST',body:b});admin()}catch(e){alert(e.message)}}}
+function edit(id){const q=Q.find(x=>x.id==id);$('#id').value=id;$('#c').value=q.category;$('#t').value=q.text;$('#k').value=q.kind||'text';$('#m').value=q.media||'';$('#d').value=q.difficulty||1;document.querySelectorAll('.o').forEach((x,i)=>x.value=q.options[i]);$('#a').value=q.answer;scrollTo(0,0)}
+async function del(id){if(confirm('حذف السؤال نهائياً؟')){await api('admin/questions/'+id,{method:'DELETE'});admin()}}
+</script>
+</body>
+</html>
