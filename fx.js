@@ -97,5 +97,14 @@ let DEF=null;
 const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent),isApp=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();DEF=e;const b=document.getElementById('inst');if(b)b.hidden=false});
 const installBtn=()=>isApp?'':`<button class="btn alt wide" id="inst"${DEF||isIOS?'':' hidden'} onclick="installApp()">${ic('download','sm')} ثبّت التطبيق على هاتفك</button>`;
-async function installApp(){if(DEF){DEF.prompt();await DEF.userChoice;DEF=null;const b=document.getElementById('inst');if(b)b.hidden=true}else alert('في الآيفون: اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية»')}
+async function installApp(){if(DEF){DEF.prompt();await DEF.userChoice;DEF=null;const b=document.getElementById('inst');if(b)b.hidden=true;const n=document.querySelector('.inb');if(n)n.remove()}else alert('في الآيفون: اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية»')}
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+
+Object.assign(P,{
+ surahs:'<path d="M9 6h11M9 12h11M9 18h11M4 6h1M4 12h1M4 18h1"/>',
+ full:'<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'});
+function toggleFS(){const d=document;d.fullscreenElement?d.exitFullscreen():d.documentElement.requestFullscreen&&d.documentElement.requestFullscreen().catch(()=>{})}
+function showBanner(){if(isApp||localStorage.nb==='1'||document.querySelector('.inb'))return;
+ document.body.insertAdjacentHTML('beforeend',`<div class="inb"><span>${ic('download','sm')} ثبّت التطبيق على شاشتك الرئيسية</span><button class="btn sm" onclick="installApp()">تثبيت</button><button class="ib sm2" aria-label="إغلاق" onclick="localStorage.nb='1';this.parentNode.remove()">×</button></div>`)}
+addEventListener('beforeinstallprompt',()=>setTimeout(showBanner,1500));
+if(isIOS)setTimeout(showBanner,2500);

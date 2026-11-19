@@ -38,11 +38,11 @@ app.get('/api/me', need, wrap(async (q, s) => {
 
 app.get('/api/questions', wrap(async (q, s) => {
   const c = q.query.category || 'all', lv = ['1', '2', '3'].includes(q.query.level) ? +q.query.level : 'all';
-  s.json((await all("SELECT * FROM questions WHERE active=1 AND (?='all' OR category=?) AND (?='all' OR difficulty=?) ORDER BY random() LIMIT ?", [c, c, lv, lv, Math.min(+q.query.n || 10, 20)])).map(pub));
+  s.json((await all("SELECT * FROM questions WHERE active=1 AND ((?='all' AND category<>'surahs') OR category=?) AND (?='all' OR difficulty=?) ORDER BY random() LIMIT ?", [c, c, lv, lv, Math.min(+q.query.n || 10, 20)])).map(pub));
 }));
 app.get('/api/daily', wrap(async (q, s) => {
   if (q.u && (await all(DAILY, [q.u.id, day()])).length) return s.json({ played: true });
-  const rows = await all('SELECT * FROM questions WHERE active=1 ORDER BY id');
+  const rows = await all("SELECT * FROM questions WHERE active=1 AND category<>'surahs' ORDER BY id");
   s.json({ questions: shuffle(rows, seeded(day())).slice(0, 10).map(pub) });
 }));
 app.post('/api/answer', wrap(async (q, s) => {
@@ -85,6 +85,21 @@ app.put('/api/admin/questions/:id', need, adm, wrap(async (q, s) => {
 }));
 app.delete('/api/admin/questions/:id', need, adm, wrap(async (q, s) => { await run('DELETE FROM questions WHERE id=?', [+q.params.id]); s.json({ ok: 1 }); }));
 
+const CATS_OK = ['quran', 'seerah', 'prophets', 'companions', 'history', 'general', 'surahs'];
+app.post('/api/admin/import', need, adm, wrap(async (q, s) => {
+  const rows = Array.isArray(q.body.rows) ? q.body.rows.slice(0, 1000) : [];
+  const have = new Set((await all('SELECT text FROM questions')).map(r => r.text)), ok = [], errs = [];
+  rows.forEach((r, i) => {
+    const [category, text, o1, o2, o3, o4, ans, dif] = (Array.isArray(r) ? r : []).map(x => String(x == null ? '' : x).trim());
+    const b = { category, text, options: [o1, o2, o3, o4], answer: (+ans || 0) - 1, difficulty: +dif || 1 };
+    if (!CATS_OK.includes(category) || !val(b)) errs.push(i + 1);
+    else if (!have.has(text)) { have.add(text); ok.push(b); }
+  });
+  for (let i = 0; i < ok.length; i += 100)
+    await db.batch(ok.slice(i, i + 100).map(b => ({ sql: 'INSERT INTO questions(category,text,options,answer,difficulty) VALUES(?,?,?,?,?)', args: [b.category, b.text, JSON.stringify(b.options), b.answer, b.difficulty] })), 'write');
+  s.json({ added: ok.length, skipped: rows.length - ok.length - errs.length, errors: errs.slice(0, 20) });
+}));
+
 (async () => {
   await db.executeMultiple(`
     CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, pass TEXT NOT NULL, xp INTEGER DEFAULT 0, streak INTEGER DEFAULT 0, last_daily TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
@@ -92,12 +107,12 @@ app.delete('/api/admin/questions/:id', need, adm, wrap(async (q, s) => { await r
     CREATE TABLE IF NOT EXISTS results(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER REFERENCES users(id), mode TEXT, category TEXT, score INTEGER, correct INTEGER, total INTEGER, created_at TEXT DEFAULT CURRENT_TIMESTAMP);`);
   for (const m of ["ALTER TABLE questions ADD COLUMN kind TEXT DEFAULT 'text'", 'ALTER TABLE questions ADD COLUMN media TEXT', 'ALTER TABLE questions ADD COLUMN difficulty INTEGER DEFAULT 1']) try { await run(m); } catch {}
   await run('CREATE TABLE IF NOT EXISTS meta(k TEXT PRIMARY KEY, v TEXT)');
-  if (((await all("SELECT v FROM meta WHERE k='seed'"))[0] || {}).v !== '3') {
+  if (((await all("SELECT v FROM meta WHERE k='seed'"))[0] || {}).v !== '4') {
     const have = new Set((await all('SELECT text FROM questions')).map(r => r.text));
-    const seeds = [...require('./seed'), ...require('./seed2')], fresh = seeds.filter(x => !have.has(x[1]));
-    if (fresh.length) await db.batch(fresh.map(([c, t, o, a, d = 1]) => ({ sql: 'INSERT INTO questions(category,text,options,answer,difficulty) VALUES(?,?,?,?,?)', args: [c, t, JSON.stringify(o), a, d] })), 'write');
-    await db.batch(seeds.map(x => ({ sql: 'UPDATE questions SET difficulty=? WHERE text=?', args: [x[4] || 1, x[1]] })), 'write');
-    await run("INSERT OR REPLACE INTO meta(k,v) VALUES('seed','3')");
+    const fresh = [...require('./seed'), ...require('./seed2'), ...require('./seed3')].filter(x => !have.has(x[1]));
+    for (let i = 0; i < fresh.length; i += 100)
+      await db.batch(fresh.slice(i, i + 100).map(([c, t, o, a, d = 1]) => ({ sql: 'INSERT INTO questions(category,text,options,answer,difficulty) VALUES(?,?,?,?,?)', args: [c, t, JSON.stringify(o), a, d] })), 'write');
+    await run("INSERT OR REPLACE INTO meta(k,v) VALUES('seed','4')");
   }
   app.listen(process.env.PORT || 3000, () => console.log('running'));
 })();
