@@ -107,12 +107,13 @@ app.post('/api/admin/import', need, adm, wrap(async (q, s) => {
     CREATE TABLE IF NOT EXISTS results(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER REFERENCES users(id), mode TEXT, category TEXT, score INTEGER, correct INTEGER, total INTEGER, created_at TEXT DEFAULT CURRENT_TIMESTAMP);`);
   for (const m of ["ALTER TABLE questions ADD COLUMN kind TEXT DEFAULT 'text'", 'ALTER TABLE questions ADD COLUMN media TEXT', 'ALTER TABLE questions ADD COLUMN difficulty INTEGER DEFAULT 1']) try { await run(m); } catch {}
   await run('CREATE TABLE IF NOT EXISTS meta(k TEXT PRIMARY KEY, v TEXT)');
-  if (((await all("SELECT v FROM meta WHERE k='seed'"))[0] || {}).v !== '4') {
+  if (((await all("SELECT v FROM meta WHERE k='seed'"))[0] || {}).v !== '5') {
     const have = new Set((await all('SELECT text FROM questions')).map(r => r.text));
-    const fresh = [...require('./seed'), ...require('./seed2'), ...require('./seed3')].filter(x => !have.has(x[1]));
+    const fresh = [ ...require('./seed'), ...require('./seed2'), ...require('./seed3'), ...require('./seed4')].filter(x => !have.has(x[1]));
+
     for (let i = 0; i < fresh.length; i += 100)
       await db.batch(fresh.slice(i, i + 100).map(([c, t, o, a, d = 1]) => ({ sql: 'INSERT INTO questions(category,text,options,answer,difficulty) VALUES(?,?,?,?,?)', args: [c, t, JSON.stringify(o), a, d] })), 'write');
-    await run("INSERT OR REPLACE INTO meta(k,v) VALUES('seed','4')");
+    await run("INSERT OR REPLACE INTO meta(k,v) VALUES('seed','5')");
   }
   app.listen(process.env.PORT || 3000, () => console.log('running'));
 })();
